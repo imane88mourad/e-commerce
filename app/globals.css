@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    scroll-behavior: smooth;
+}
+
+@layer base {
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────
+   Admin design system (scoped to /admin)
+   Light/dark tokens exposed via CSS variables.
+   These only apply inside the admin shell.
+   ───────────────────────────────────────────── */
+.admin-root {
+  --admin-bg: #f8f9fb;
+  --admin-surface: #ffffff;
+  --admin-border: #e8eaed;
+  --admin-text: #0f172a;
+  --admin-muted: #64748b;
+  --admin-accent: #f97316;
+  --admin-accent-soft: #fff7ed;
+}
+
+.admin-root.dark {
+  --admin-bg: #0c1015;
+  --admin-surface: #151b23;
+  --admin-border: #242d38;
+  --admin-text: #e5e7eb;
+  --admin-muted: #94a3b8;
+  --admin-accent: #fb923c;
+  --admin-accent-soft: #2a1c0e;
+}
+
+.admin-root {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  min-height: 100dvh;
+}
+
+/* Admin table styling */
+.admin-root table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-root table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--admin-surface);
+}
+
+/* Admin responsive tweaks */
+@media (max-width: 1024px) {
+  .admin-root table {
+    font-size: 0.8125rem;
+  }
+  .admin-root table th,
+  .admin-root table td {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+.admin-root ::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+
+.admin-root ::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 9999px;
+}
