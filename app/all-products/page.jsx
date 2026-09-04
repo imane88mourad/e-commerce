@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Loading from "@/components/Loading";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { productsApi } from "@/lib/api/products";
 import { useSearchParams } from "next/navigation";
 import { mapProducts } from "@/lib/transformers";
@@ -13,6 +14,7 @@ const PRODUCTS_PER_PAGE = 12;
 
 const AllProductsContent = () => {
     const { categories, brands } = useAppContext();
+    const { t, isRTL } = useLanguage();
     const [products, setProducts] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -28,7 +30,6 @@ const AllProductsContent = () => {
     const bestSellersFilter = searchParams.get('best_sellers');
     const searchQuery = searchParams.get('search');
 
-    // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
     }, [selectedCategory, selectedBrand, sortBy, searchQuery, featuredFilter, newFilter, bestSellersFilter]);
@@ -66,11 +67,11 @@ const AllProductsContent = () => {
     const totalPages = Math.ceil(totalCount / PRODUCTS_PER_PAGE);
 
     const getPageTitle = () => {
-        if (searchQuery) return `Search: "${searchQuery}"`;
-        if (featuredFilter) return 'Featured Products';
-        if (newFilter) return 'New Arrivals';
-        if (bestSellersFilter) return 'Best Sellers';
-        return 'All Products';
+        if (searchQuery) return `${t('search.resultsFor')} "${searchQuery}"`;
+        if (featuredFilter) return t('home.featuredProducts');
+        if (newFilter) return t('home.newArrivals');
+        if (bestSellersFilter) return t('home.bestSellers');
+        return t('home.allProducts');
     };
 
     const handlePageChange = (page) => {
@@ -81,12 +82,12 @@ const AllProductsContent = () => {
     return (
         <>
             <Navbar />
-            <div className="flex flex-col items-start px-6 md:px-16 lg:px-32">
-                <div className="flex flex-col items-end pt-12">
-                    <p className="text-2xl font-medium">{getPageTitle()}</p>
+            <div className={`flex flex-col items-start px-6 md:px-16 lg:px-32 ${isRTL ? 'items-end' : ''}`}>
+                <div className={`flex flex-col items-end pt-12 ${isRTL ? 'items-start' : ''}`}>
+                    <p className={`text-2xl font-medium ${isRTL ? 'text-left' : ''}`}>{getPageTitle()}</p>
                     <div className="w-16 h-0.5 bg-orange-600 rounded-full"></div>
                     {totalCount > 0 && (
-                        <p className="text-sm text-gray-500 mt-1">{totalCount} product{totalCount !== 1 ? 's' : ''}</p>
+                        <p className="text-sm text-gray-500 mt-1">{totalCount} {totalCount !== 1 ? t('allProducts.products') : t('allProducts.product')}</p>
                     )}
                 </div>
 
@@ -97,7 +98,7 @@ const AllProductsContent = () => {
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="px-4 py-2 border border-gray-500/30 rounded outline-none"
                     >
-                        <option value="">All Categories</option>
+                        <option value="">{t('allProducts.allCategories')}</option>
                         {categories.map((category) => (
                             <option key={category.id} value={category.id}>
                                 {category.name}
@@ -110,7 +111,7 @@ const AllProductsContent = () => {
                         onChange={(e) => setSelectedBrand(e.target.value)}
                         className="px-4 py-2 border border-gray-500/30 rounded outline-none"
                     >
-                        <option value="">All Brands</option>
+                        <option value="">{t('allProducts.allBrands')}</option>
                         {brands.map((brand) => (
                             <option key={brand.id} value={brand.id}>
                                 {brand.name}
@@ -123,19 +124,19 @@ const AllProductsContent = () => {
                         onChange={(e) => setSortBy(e.target.value)}
                         className="px-4 py-2 border border-gray-500/30 rounded outline-none"
                     >
-                        <option value="-created_at">Newest</option>
-                        <option value="price">Price: Low to High</option>
-                        <option value="-price">Price: High to Low</option>
-                        <option value="name">Name: A to Z</option>
+                        <option value="-created_at">{t('allProducts.newest')}</option>
+                        <option value="price">{t('allProducts.priceLowHigh')}</option>
+                        <option value="-price">{t('allProducts.priceHighLow')}</option>
+                        <option value="name">{t('allProducts.nameAZ')}</option>
                     </select>
                 </div>
 
                 {loading ? (
                     <Loading />
                 ) : error ? (
-                    <p className="text-red-500 mt-12">Error loading products: {error}</p>
+                    <p className="text-red-500 mt-12">{t('error')}: {error}</p>
                 ) : products.length === 0 ? (
-                    <p className="text-gray-500 mt-12">No products available.</p>
+                    <p className="text-gray-500 mt-12">{t('allProducts.noProducts')}</p>
                 ) : (
                     <>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-12 pb-8 w-full">
@@ -150,7 +151,7 @@ const AllProductsContent = () => {
                                     disabled={currentPage === 1}
                                     className="px-4 py-2 border rounded text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                                 >
-                                    ← Prev
+                                    ← {t('prev')}
                                 </button>
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                                     <button
@@ -170,7 +171,7 @@ const AllProductsContent = () => {
                                     disabled={currentPage === totalPages}
                                     className="px-4 py-2 border rounded text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                                 >
-                                    Next →
+                                    {t('next')} →
                                 </button>
                             </div>
                         )}

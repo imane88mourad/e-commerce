@@ -10,6 +10,7 @@ import { Icon } from '@/components/admin/ui/icons';
 import {
   adminOrdersApi, formatPrice, ORDER_STATUSES, PAYMENT_STATUSES,
 } from '@/lib/api/admin-orders';
+import { useLanguage } from '@/context/LanguageContext';
 
 const PAGE_SIZE = 15;
 
@@ -28,6 +29,7 @@ const fmtDate = (iso) => {
 
 function OrdersContent() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +58,7 @@ function OrdersContent() {
     setError('');
     adminOrdersApi.list(buildQuery())
       .then((data) => { if (active) { setOrders(data.results || []); setCount(data.count || 0); } })
-      .catch((err) => { if (active) setError(err.message || 'Erreur chargement commandes'); })
+      .catch((err) => { if (active) setError(err.message || t('admin.orders.errorLoading')); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [buildQuery]);
@@ -70,10 +72,10 @@ function OrdersContent() {
     setUpdatingId(order.id);
     try {
       const updated = await adminOrdersApi.updateStatus(order.id, newStatus);
-      toast.success(`Commande #${order.id} → ${updated.status}`);
+      toast.success(t('admin.orders.updated', { id: order.id, status: updated.status }));
       setOrders((prev) => prev.map((o) => (o.id === order.id ? updated : o)));
     } catch (err) {
-      toast.error(err.message || 'Erreur mise à jour statut');
+      toast.error(err.message || t('admin.orders.errorUpdate'));
     } finally {
       setUpdatingId(null);
     }
@@ -82,13 +84,13 @@ function OrdersContent() {
   return (
     <div>
       <PageHeader
-        title="Commandes"
-        subtitle={`${count} commande${count > 1 ? 's' : ''}`}
+        title={t('admin.orders.title')}
+        subtitle={t('admin.orders.subtitle', { count })}
         breadcrumb={
           <>
-            <Link href="/admin" className="hover:text-[color:var(--admin-accent)]">Dashboard</Link>
+            <Link href="/admin" className="hover:text-[color:var(--admin-accent)]">{t('admin.sidebar.dashboard')}</Link>
             <span>/</span>
-            <span>Commandes</span>
+            <span>{t('admin.orders.title')}</span>
           </>
         }
       />
@@ -98,18 +100,18 @@ function OrdersContent() {
           <Toolbar
             value={search}
             onSearch={setSearch}
-            searchPlaceholder="Rechercher (n°, email, nom)…"
+            searchPlaceholder={t('admin.orders.searchPlaceholder')}
           >
             <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="md:w-44">
-              <option value="">Tous statuts</option>
+              <option value="">{t('admin.orders.allStatuses')}</option>
               {ORDER_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </Select>
             <Select value={paymentStatus} onChange={(e) => { setPaymentStatus(e.target.value); setPage(1); }} className="md:w-48">
-              <option value="">Tous paiements</option>
+              <option value="">{t('admin.orders.allPayments')}</option>
               {PAYMENT_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </Select>
             {(status || paymentStatus || search) && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>Réinitialiser</Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters}>{t('admin.orders.reset')}</Button>
             )}
           </Toolbar>
         </div>
@@ -121,21 +123,21 @@ function OrdersContent() {
         ) : orders.length === 0 ? (
           <EmptyState
             icon={<Icon name="orders" size={28} />}
-            title="Aucune commande"
-            description="Aucune commande ne correspond à vos critères."
+            title={t('admin.orders.noOrders')}
+            description={t('admin.orders.noOrdersDesc')}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-[color:var(--admin-border)]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">N°</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Date</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Montant</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Paiement</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Statut</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.number')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.customer')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.date')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.amount')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.payment')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.status')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.orders.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--admin-border)]">
@@ -179,7 +181,7 @@ function OrdersContent() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          title="Voir la commande"
+                          title={t('admin.orders.viewOrder')}
                           onClick={(e) => { e.stopPropagation(); router.push(`/admin/orders/${o.id}`); }}
                           className="rounded-lg p-2 text-[color:var(--admin-muted)] transition hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-accent)]"
                         >
@@ -195,14 +197,14 @@ function OrdersContent() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-[color:var(--admin-border)] px-5 py-3 text-sm">
                 <span className="text-[color:var(--admin-muted)]">
-                  Page {page} sur {totalPages} — {count} résultat{count > 1 ? 's' : ''}
+                  {t('admin.orders.pageOf', { page, total: totalPages, count })}
                 </span>
                 <div className="flex items-center gap-2">
                   <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                    <Icon name="arrowLeft" size={14} /> Précédent
+                    <Icon name="arrowLeft" size={14} /> {t('admin.orders.prev')}
                   </Button>
                   <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-                    Suivant <Icon name="arrowRight" size={14} />
+                    {t('admin.orders.next')} <Icon name="arrowRight" size={14} />
                   </Button>
                 </div>
               </div>

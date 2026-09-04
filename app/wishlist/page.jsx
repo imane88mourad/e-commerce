@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAppContext } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { wishlistApi } from '@/lib/api/reviews';
 import { formatPrice, resolveMediaUrl } from '@/lib/api/admin-products';
 import { assets } from '@/assets/assets';
@@ -12,6 +13,7 @@ import { toast } from 'react-hot-toast';
 
 export default function WishlistPage() {
     const { user, router, addToCart } = useAppContext();
+    const { t, isRTL } = useLanguage();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [removing, setRemoving] = useState(null);
@@ -32,9 +34,9 @@ export default function WishlistPage() {
         try {
             await wishlistApi.remove(item.product);
             setItems((prev) => prev.filter((i) => i.id !== item.id));
-            toast.success('Retiré des favoris.');
+            toast.success(t('wishlist.removedFromWishlist'));
         } catch (err) {
-            toast.error(err.message || 'Erreur.');
+            toast.error(err.message || t('error'));
         } finally {
             setRemoving(null);
         }
@@ -42,7 +44,7 @@ export default function WishlistPage() {
 
     const handleAddToCart = (item) => {
         addToCart(item.product);
-        toast.success('Ajouté au panier.');
+        toast.success(t('wishlist.addedToCart'));
     };
 
     if (!user) {
@@ -50,9 +52,9 @@ export default function WishlistPage() {
             <>
                 <Navbar />
                 <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 gap-4">
-                    <p className="text-gray-500 text-lg">Connectez-vous pour voir votre liste de favoris.</p>
+                    <p className="text-gray-500 text-lg">{t('wishlist.loginRequired')}</p>
                     <Link href="/login" className="px-6 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
-                        Se connecter
+                        {t('wishlist.login')}
                     </Link>
                 </div>
                 <Footer />
@@ -64,8 +66,8 @@ export default function WishlistPage() {
         <>
             <Navbar />
             <div className="px-6 md:px-16 lg:px-32 pt-14 pb-20">
-                <h1 className="text-2xl font-medium text-gray-800 mb-8">
-                    Ma Liste de Favoris
+                <h1 className={`text-2xl font-medium text-gray-800 mb-8 ${isRTL ? 'text-right' : ''}`}>
+                    {t('wishlist.title')}
                     {items.length > 0 && <span className="text-gray-400 font-normal ml-2">({items.length})</span>}
                 </h1>
 
@@ -84,9 +86,9 @@ export default function WishlistPage() {
                         <svg width={64} height={64} viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
-                        <p className="text-gray-500 text-lg">Votre liste de favoris est vide.</p>
+                        <p className="text-gray-500 text-lg">{t('wishlist.empty')}</p>
                         <Link href="/all-products" className="px-6 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
-                            Découvrir nos produits
+                            {t('wishlist.discoverProducts')}
                         </Link>
                     </div>
                 ) : (
@@ -97,7 +99,7 @@ export default function WishlistPage() {
                             const inactive = !item.product_is_active;
 
                             return (
-                                <div key={item.id} className={`flex gap-4 bg-white border border-gray-100 rounded-xl p-4 transition hover:shadow-md ${inactive ? 'opacity-50' : ''}`}>
+                                <div key={item.id} className={`flex gap-4 bg-white border border-gray-100 rounded-xl p-4 transition hover:shadow-md ${inactive ? 'opacity-50' : ''} ${isRTL ? 'flex-row-reverse' : ''}`}>
                                     <Link
                                         href={`/product/${item.product}`}
                                         className="shrink-0 w-28 h-28 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center"
@@ -108,7 +110,7 @@ export default function WishlistPage() {
                                             <div className="text-gray-300 text-xs">No image</div>
                                         )}
                                     </Link>
-                                    <div className="flex flex-col flex-1 min-w-0">
+                                    <div className={`flex flex-col flex-1 min-w-0 ${isRTL ? 'text-right items-end' : ''}`}>
                                         <Link href={`/product/${item.product}`} className="text-sm font-medium text-gray-800 hover:text-orange-500 truncate">
                                             {item.product_name}
                                         </Link>
@@ -116,18 +118,18 @@ export default function WishlistPage() {
                                             {formatPrice(item.product_offer_price || item.product_price)}
                                         </p>
                                         {outOfStock && (
-                                            <span className="text-xs text-red-500 mt-1">Rupture de stock</span>
+                                            <span className="text-xs text-red-500 mt-1">{t('wishlist.outOfStock')}</span>
                                         )}
                                         {inactive && (
-                                            <span className="text-xs text-gray-400 mt-1">Produit indisponible</span>
+                                            <span className="text-xs text-gray-400 mt-1">{t('wishlist.unavailable')}</span>
                                         )}
-                                        <div className="flex items-center gap-2 mt-auto pt-2">
+                                        <div className={`flex items-center gap-2 mt-auto pt-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                             {!outOfStock && !inactive && (
                                                 <button
                                                     onClick={() => handleAddToCart(item)}
                                                     className="px-3 py-1.5 text-xs bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
                                                 >
-                                                    Ajouter au panier
+                                                    {t('wishlist.addToCart')}
                                                 </button>
                                             )}
                                             <button
@@ -135,7 +137,7 @@ export default function WishlistPage() {
                                                 disabled={removing === item.id}
                                                 className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition disabled:opacity-50"
                                             >
-                                                {removing === item.id ? '…' : 'Supprimer'}
+                                                {removing === item.id ? '…' : t('wishlist.delete')}
                                             </button>
                                         </div>
                                     </div>

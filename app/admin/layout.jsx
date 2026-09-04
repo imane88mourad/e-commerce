@@ -5,6 +5,7 @@ import Sidebar from '@/components/admin/Sidebar';
 import Header from '@/components/admin/Header';
 import { AdminThemeProvider, useAdminTheme } from '@/components/admin/ui/theme';
 import AdminGuard from './AdminGuard';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 function AdminFrame({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,10 +39,12 @@ function AdminFrame({ children }) {
 
 export default function AdminLayout({ children }) {
   return (
-    <AdminGuard>
-      <AdminThemeProvider>
-        <AdminFrame>{children}</AdminFrame>
-      </AdminThemeProvider>
-    </AdminGuard>
+    <LanguageProvider>
+      <AdminGuard>
+        <AdminThemeProvider>
+          <AdminFrame>{children}</AdminFrame>
+        </AdminThemeProvider>
+      </AdminGuard>
+    </LanguageProvider>
   );
 }

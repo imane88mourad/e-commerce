@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Loading from "@/components/Loading";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { productsApi } from "@/lib/api/products";
 import { useSearchParams } from "next/navigation";
 import { mapProducts } from "@/lib/transformers";
@@ -13,6 +14,7 @@ const PRODUCTS_PER_PAGE = 12;
 
 const SearchContent = () => {
     const { categories, brands } = useAppContext();
+    const { t, isRTL } = useLanguage();
     const [products, setProducts] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -70,19 +72,19 @@ const SearchContent = () => {
     return (
         <>
             <Navbar />
-            <div className="flex flex-col items-start px-6 md:px-16 lg:px-32">
-                <div className="flex flex-col items-end pt-12">
-                    <p className="text-2xl font-medium">
-                        {searchQuery ? `Search results for: "${searchQuery}"` : 'Search'}
+            <div className={`flex flex-col items-start px-6 md:px-16 lg:px-32 ${isRTL ? 'items-end' : ''}`}>
+                <div className={`flex flex-col items-end pt-12 ${isRTL ? 'items-start' : ''}`}>
+                    <p className={`text-2xl font-medium ${isRTL ? 'text-left' : ''}`}>
+                        {searchQuery ? `${t('search.resultsFor')} "${searchQuery}"` : t('search.title')}
                     </p>
                     <div className="w-16 h-0.5 bg-orange-600 rounded-full"></div>
                     {totalCount > 0 && (
-                        <p className="text-sm text-gray-500 mt-1">{totalCount} product{totalCount !== 1 ? 's' : ''} found</p>
+                        <p className="text-sm text-gray-500 mt-1">{totalCount} {totalCount !== 1 ? t('allProducts.products') : t('allProducts.product')} {t('search.found')}</p>
                     )}
                 </div>
 
                 {!searchQuery && (
-                    <p className="text-gray-500 mt-12">Enter a search term to find products.</p>
+                    <p className="text-gray-500 mt-12">{t('search.noResults')}</p>
                 )}
 
                 {searchQuery && (
@@ -92,7 +94,7 @@ const SearchContent = () => {
                             onChange={(e) => setSelectedCategory(e.target.value)}
                             className="px-4 py-2 border border-gray-500/30 rounded outline-none"
                         >
-                            <option value="">All Categories</option>
+                            <option value="">{t('allProducts.allCategories')}</option>
                             {categories.map((category) => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
@@ -105,7 +107,7 @@ const SearchContent = () => {
                             onChange={(e) => setSelectedBrand(e.target.value)}
                             className="px-4 py-2 border border-gray-500/30 rounded outline-none"
                         >
-                            <option value="">All Brands</option>
+                            <option value="">{t('allProducts.allBrands')}</option>
                             {brands.map((brand) => (
                                 <option key={brand.id} value={brand.id}>
                                     {brand.name}
@@ -118,10 +120,10 @@ const SearchContent = () => {
                             onChange={(e) => setSortBy(e.target.value)}
                             className="px-4 py-2 border border-gray-500/30 rounded outline-none"
                         >
-                            <option value="-created_at">Newest</option>
-                            <option value="price">Price: Low to High</option>
-                            <option value="-price">Price: High to Low</option>
-                            <option value="name">Name: A to Z</option>
+                            <option value="-created_at">{t('allProducts.newest')}</option>
+                            <option value="price">{t('allProducts.priceLowHigh')}</option>
+                            <option value="-price">{t('allProducts.priceHighLow')}</option>
+                            <option value="name">{t('allProducts.nameAZ')}</option>
                         </select>
                     </div>
                 )}
@@ -129,9 +131,9 @@ const SearchContent = () => {
                 {loading ? (
                     <Loading />
                 ) : error ? (
-                    <p className="text-red-500 mt-12">Error loading search results: {error}</p>
+                    <p className="text-red-500 mt-12">{t('error')}: {error}</p>
                 ) : products.length === 0 && searchQuery ? (
-                    <p className="text-gray-500 mt-12">No products found for "{searchQuery}".</p>
+                    <p className="text-gray-500 mt-12">{t('search.noResultsFor')} "{searchQuery}".</p>
                 ) : (
                     <>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-12 pb-8 w-full">
@@ -145,7 +147,7 @@ const SearchContent = () => {
                                     disabled={currentPage === 1}
                                     className="px-4 py-2 border rounded text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                                 >
-                                    ← Prev
+                                    ← {t('prev')}
                                 </button>
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                                     <button
@@ -165,7 +167,7 @@ const SearchContent = () => {
                                     disabled={currentPage === totalPages}
                                     className="px-4 py-2 border rounded text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                                 >
-                                    Next →
+                                    {t('next')} →
                                 </button>
                             </div>
                         )}

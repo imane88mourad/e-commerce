@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from "react";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -13,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { login } = useAppContext();
+  const { t, isRTL } = useLanguage();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -26,7 +28,7 @@ const Login = () => {
       const isAdmin = result.user && (result.user.role === 'admin' || result.user.is_staff);
       router.push(isAdmin ? '/admin' : '/');
     } else {
-      setError(result.error || 'Login failed');
+      setError(result.error || t('login.loginFailed'));
     }
 
     setLoading(false);
@@ -45,8 +47,8 @@ const Login = () => {
               width={150}
               height={50}
             />
-            <h1 className="text-2xl font-medium text-gray-800">Login</h1>
-            <p className="text-gray-600 mt-2">Welcome back! Please login to your account.</p>
+            <h1 className="text-2xl font-medium text-gray-800">{t('login.title')}</h1>
+            <p className="text-gray-600 mt-2">{t('login.welcomeBack')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -58,7 +60,7 @@ const Login = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Username or Email
+                {t('login.usernameOrEmail')}
               </label>
               <input
                 type="text"
@@ -66,13 +68,13 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                placeholder="Enter your email"
+                placeholder={t('login.usernamePlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                {t('login.password')}
               </label>
               <input
                 type="password"
@@ -80,7 +82,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                placeholder="Enter your password"
+                placeholder={t('login.passwordPlaceholder')}
               />
             </div>
 
@@ -89,17 +91,17 @@ const Login = () => {
               disabled={loading}
               className="w-full bg-orange-600 text-white py-2.5 rounded-lg hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? t('login.loggingIn') : t('login.login')}
             </button>
           </form>
 
           <p className="text-center text-gray-600 mt-6">
-            Don't have an account?{' '}
+            {t('login.noAccount')}{' '}
             <button
               onClick={() => router.push('/register')}
               className="text-orange-600 hover:underline"
             >
-              Register
+              {t('login.register')}
             </button>
           </p>
         </div>

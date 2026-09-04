@@ -3,55 +3,55 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from './ui/icons';
-
-const NAV = [
-  {
-    group: 'Principal',
-    items: [{ name: 'Dashboard', path: '/admin', icon: 'dashboard' }],
-  },
-  {
-    group: 'Ventes',
-    items: [
-      { name: 'Commandes', path: '/admin/orders', icon: 'orders' },
-      { name: 'Clients', path: '/admin/customers', icon: 'clients' },
-      { name: 'Devis', path: '/admin/quotes', icon: 'quotes' },
-      { name: 'Factures', path: '/admin/invoices', icon: 'invoices' },
-    ],
-  },
-  {
-    group: 'Catalogue',
-    items: [
-      { name: 'Produits', path: '/admin/products', icon: 'products' },
-      { name: 'Catégories', path: '/admin/categories', icon: 'categories' },
-      { name: 'Marques', path: '/admin/brands', icon: 'brands' },
-    ],
-  },
-  {
-    group: 'Marketing',
-    items: [
-      { name: 'Promotions', path: '/admin/promotions', icon: 'promotions' },
-      { name: 'Avis', path: '/admin/reviews', icon: 'reviews' },
-    ],
-  },
-  {
-    group: 'Analyse',
-    items: [
-      { name: 'Analytics', path: '/admin/analytics', icon: 'analytics' },
-    ],
-  },
-  {
-    group: 'Système',
-    items: [
-      { name: 'Utilisateurs', path: '/admin/users', icon: 'users' },
-      { name: 'Paramètres', path: '/admin/settings', icon: 'settings' },
-    ],
-  },
-];
-
-export const ADMIN_NAV = NAV;
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const NAV = [
+    {
+      group: t('admin.sidebar.main'),
+      items: [{ name: t('admin.sidebar.dashboard'), path: '/admin', icon: 'dashboard' }],
+    },
+    {
+      group: t('admin.sidebar.sales'),
+      items: [
+        { name: t('admin.sidebar.orders'), path: '/admin/orders', icon: 'orders' },
+        { name: t('admin.sidebar.customers'), path: '/admin/customers', icon: 'clients' },
+        { name: t('admin.sidebar.quotes'), path: '/admin/quotes', icon: 'quotes' },
+        { name: t('admin.sidebar.invoices'), path: '/admin/invoices', icon: 'invoices' },
+      ],
+    },
+    {
+      group: t('admin.sidebar.catalogue'),
+      items: [
+        { name: t('admin.sidebar.products'), path: '/admin/products', icon: 'products' },
+        { name: t('admin.sidebar.categories'), path: '/admin/categories', icon: 'categories' },
+        { name: t('admin.sidebar.brands'), path: '/admin/brands', icon: 'brands' },
+      ],
+    },
+    {
+      group: t('admin.sidebar.marketing'),
+      items: [
+        { name: t('admin.sidebar.promotions'), path: '/admin/promotions', icon: 'promotions' },
+        { name: t('admin.sidebar.reviews'), path: '/admin/reviews', icon: 'reviews' },
+      ],
+    },
+    {
+      group: t('admin.sidebar.analytics'),
+      items: [
+        { name: t('admin.sidebar.analytics'), path: '/admin/analytics', icon: 'analytics' },
+      ],
+    },
+    {
+      group: t('admin.sidebar.system'),
+      items: [
+        { name: t('admin.sidebar.users'), path: '/admin/users', icon: 'users' },
+        { name: t('admin.sidebar.settings'), path: '/admin/settings', icon: 'settings' },
+      ],
+    },
+  ];
 
   const isActive = (path) => {
     if (path === '/admin') return pathname === '/admin' || pathname === '/admin/';
@@ -60,7 +60,6 @@ export default function Sidebar({ open, onClose }) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
@@ -74,18 +73,16 @@ export default function Sidebar({ open, onClose }) {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Logo */}
         <div className="flex h-16 shrink-0 items-center gap-3 border-b border-[color:var(--admin-border)] px-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--admin-accent)] text-sm font-bold text-white shadow-sm">
             Q
           </div>
           <div className="min-w-0">
             <span className="block truncate text-sm font-bold text-[color:var(--admin-text)]">QuickCart</span>
-            <span className="block text-[10px] font-medium uppercase tracking-wider text-[color:var(--admin-muted)]">Back Office</span>
+            <span className="block text-[10px] font-medium uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.sidebar.backOffice')}</span>
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {NAV.map((section) => (
             <div key={section.group} className="mb-5">
@@ -124,13 +121,12 @@ export default function Sidebar({ open, onClose }) {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="shrink-0 border-t border-[color:var(--admin-border)] p-3">
           <div className="flex items-center gap-2 rounded-lg bg-[color:var(--admin-accent-soft)] px-3 py-2.5">
             <Icon name="box" size={16} className="text-[color:var(--admin-accent)]" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-[color:var(--admin-text)]">Besoin d'aide ?</p>
-              <p className="truncate text-[10px] text-[color:var(--admin-muted)]">Documentation & support</p>
+              <p className="truncate text-xs font-medium text-[color:var(--admin-text)]">{t('admin.sidebar.helpTitle')}</p>
+              <p className="truncate text-[10px] text-[color:var(--admin-muted)]">{t('admin.sidebar.helpSubtitle')}</p>
             </div>
           </div>
         </div>

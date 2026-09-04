@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppContextProvider } from "@/context/AppContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -20,14 +21,29 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr">
+      <head>
+        <script dangerouslySetInnerHTML={{__html: `
+          try {
+            var savedLocale = localStorage.getItem('locale');
+            if (savedLocale === 'ar') {
+              document.documentElement.dir = 'rtl';
+              document.documentElement.lang = 'ar';
+            } else if (savedLocale === 'fr') {
+              document.documentElement.lang = 'fr';
+            }
+          } catch(e) {}
+        `}} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Toaster position="bottom-right" />
-        <AppContextProvider>
-          {children}
-        </AppContextProvider>
+        <LanguageProvider>
+          <AppContextProvider>
+            {children}
+          </AppContextProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

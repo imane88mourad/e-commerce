@@ -1,12 +1,14 @@
 'use client'
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
 import { assets } from "@/assets/assets";
 
 const Checkout = () => {
   const { products, router, cartItems, setCartItems, getCartCount, currency, token, userData, promo, applyPromo, removePromo, getCartSummary } = useAppContext();
+  const { t, isRTL } = useLanguage();
 
   const [promoInput, setPromoInput] = useState('');
   const [promoMsg, setPromoMsg] = useState('');
@@ -47,7 +49,6 @@ const Checkout = () => {
     guest_shipping_info: '',
   });
 
-  // Pre-fill form for logged-in users (allows editing; login stays optional)
   useEffect(() => {
     if (userData) {
       setForm((prev) => ({
@@ -74,15 +75,14 @@ const Checkout = () => {
     setError('');
 
     if (cartProducts.length === 0) {
-      setError('Your cart is empty');
+      setError(t('checkout.cartEmpty'));
       return;
     }
 
-    // Validate required fields
     const required = ['guest_first_name', 'guest_last_name', 'guest_email', 'guest_phone', 'guest_address', 'guest_city', 'guest_state'];
     for (const field of required) {
       if (!form[field].trim()) {
-        setError(`Please fill in all required fields`);
+        setError(t('checkout.fillRequired'));
         return;
       }
     }
@@ -105,7 +105,6 @@ const Checkout = () => {
       const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/api\/?$/, '');
 
       const headers = { 'Content-Type': 'application/json' };
-      // If logged in, send the token so the order is linked to the account
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -121,7 +120,6 @@ const Checkout = () => {
         setCartItems({});
         removePromo();
 
-        // If online payment selected, initiate payment
         if (paymentMethod === 'online_card') {
           try {
             const payRes = await fetch(`${API_URL}/api/payments/initiate/${order.id}/`, {
@@ -138,23 +136,19 @@ const Checkout = () => {
 
             if (payRes.ok) {
               const payData = await payRes.json();
-              // Redirect to the mock payment page
               router.push(payData.payment_url + `&email=${encodeURIComponent(form.guest_email)}`);
               return;
             } else {
-              // Payment initiation failed — order was still created, redirect to success
               router.push(`/order-success?orderId=${order.id}&guestEmail=${encodeURIComponent(form.guest_email)}`);
               return;
             }
           } catch (payErr) {
             console.error('Payment initiation error:', payErr);
-            // Order created but payment failed — redirect to order success
             router.push(`/order-success?orderId=${order.id}&guestEmail=${encodeURIComponent(form.guest_email)}`);
             return;
           }
         }
 
-        // COD / bank transfer — go straight to success
         router.push(`/order-success?orderId=${order.id}&guestEmail=${encodeURIComponent(form.guest_email)}`);
       } else {
         const err = await res.json();
@@ -162,7 +156,7 @@ const Checkout = () => {
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      setError('Failed to place order. Please try again.');
+      setError(t('checkout.orderFailed'));
     } finally {
       setLoading(false);
     }
@@ -180,13 +174,13 @@ const Checkout = () => {
       <div className="flex flex-col md:flex-row gap-10 px-6 md:px-16 lg:px-32 pt-14 mb-20">
         {/* Left: Form */}
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-8 border-b border-gray-500/30 pb-6">
-            <p className="text-2xl md:text-3xl text-gray-500">
-              <span className="font-medium text-orange-600">Checkout</span>
+          <div className={`flex items-center justify-between mb-8 border-b border-gray-500/30 pb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <p className={`text-2xl md:text-3xl text-gray-500 ${isRTL ? 'text-right' : ''}`}>
+              <span className="font-medium text-orange-600">{t('checkout.title')}</span>
             </p>
             {!token && (
               <p className="text-sm text-gray-400">
-                Or <button onClick={() => router.push('/login')} className="text-orange-600 hover:underline">sign in</button> to auto-fill
+                {t('checkout.loginToAutoFill')} <button onClick={() => router.push('/login')} className="text-orange-600 hover:underline">{t('checkout.signIn')}</button> {t('checkout.autoFill')}
               </p>
             )}
           </div>
@@ -201,7 +195,7 @@ const Checkout = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                  First Name *
+                  {t('checkout.firstName')}
                 </label>
                 <input
                   type="text"
@@ -210,12 +204,12 @@ const Checkout = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                  placeholder="Enter your first name"
+                  placeholder={t('checkout.firstNamePlaceholder')}
                 />
               </div>
               <div>
                 <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                  Last Name *
+                  {t('checkout.lastName')}
                 </label>
                 <input
                   type="text"
@@ -224,7 +218,7 @@ const Checkout = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                  placeholder="Enter your last name"
+                  placeholder={t('checkout.lastNamePlaceholder')}
                 />
               </div>
             </div>
@@ -232,7 +226,7 @@ const Checkout = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                  Email *
+                  {t('checkout.email')}
                 </label>
                 <input
                   type="email"
@@ -241,12 +235,12 @@ const Checkout = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                  placeholder="Enter your email"
+                  placeholder={t('checkout.emailPlaceholder')}
                 />
               </div>
               <div>
                 <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                  Phone *
+                  {t('checkout.phone')}
                 </label>
                 <input
                   type="tel"
@@ -255,14 +249,14 @@ const Checkout = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                  placeholder="Enter your phone number"
+                  placeholder={t('checkout.phonePlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                Address *
+                {t('checkout.address')}
               </label>
               <input
                 type="text"
@@ -271,14 +265,14 @@ const Checkout = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                placeholder="Enter your full address"
+                placeholder={t('checkout.addressPlaceholder')}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                  City *
+                  {t('checkout.city')}
                 </label>
                 <input
                   type="text"
@@ -287,12 +281,12 @@ const Checkout = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                  placeholder="City"
+                  placeholder={t('checkout.cityPlaceholder')}
                 />
               </div>
               <div>
                 <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                  Wilaya / State *
+                  {t('checkout.state')}
                 </label>
                 <input
                   type="text"
@@ -301,14 +295,14 @@ const Checkout = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                  placeholder="Wilaya"
+                  placeholder={t('checkout.statePlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-                Shipping Information
+                {t('checkout.shippingInfo')}
               </label>
               <textarea
                 type="text"
@@ -316,7 +310,7 @@ const Checkout = () => {
                 value={form.guest_shipping_info}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-600"
-                placeholder="Delivery instructions, notes, preferred time, etc. (optional)"
+                placeholder={t('checkout.shippingPlaceholder')}
                 rows={3}
               />
             </div>
@@ -324,7 +318,7 @@ const Checkout = () => {
             {/* Payment Method Selection */}
             <div>
               <label className="text-base font-medium uppercase text-gray-600 block mb-3">
-                Payment Method *
+                {t('checkout.paymentMethod')}
               </label>
               <div className="space-y-3">
                 {/* Cash on Delivery */}
@@ -338,8 +332,8 @@ const Checkout = () => {
                     className="text-orange-600 focus:ring-orange-500"
                   />
                   <div className="flex-1">
-                    <span className="font-medium text-gray-800">Cash on Delivery</span>
-                    <p className="text-xs text-gray-500 mt-0.5">Pay when you receive your order</p>
+                    <span className="font-medium text-gray-800">{t('checkout.cod')}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('checkout.codDesc')}</p>
                   </div>
                   <span className="text-lg">💵</span>
                 </label>
@@ -355,8 +349,8 @@ const Checkout = () => {
                     className="text-orange-600 focus:ring-orange-500"
                   />
                   <div className="flex-1">
-                    <span className="font-medium text-gray-800">Bank Transfer</span>
-                    <p className="text-xs text-gray-500 mt-0.5">Transfer to our bank account</p>
+                    <span className="font-medium text-gray-800">{t('checkout.bankTransfer')}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('checkout.bankTransferDesc')}</p>
                   </div>
                   <span className="text-lg">🏦</span>
                 </label>
@@ -372,8 +366,8 @@ const Checkout = () => {
                     className="text-orange-600 focus:ring-orange-500"
                   />
                   <div className="flex-1">
-                    <span className="font-medium text-gray-800">Online Payment</span>
-                    <p className="text-xs text-gray-500 mt-0.5">Pay securely online (card / mobile)</p>
+                    <span className="font-medium text-gray-800">{t('checkout.onlinePayment')}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('checkout.onlinePaymentDesc')}</p>
                   </div>
                   <span className="text-lg">💳</span>
                 </label>
@@ -385,22 +379,22 @@ const Checkout = () => {
               disabled={loading || cartProducts.length === 0}
               className="w-full bg-orange-600 text-white py-3.5 mt-6 hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
             >
-              {loading ? 'Placing Order...' : paymentMethod === 'online_card'
-                ? `Pay — ${currency}${total.toFixed(2)}`
-                : `Place Order — ${currency}${total.toFixed(2)}`
+              {loading ? t('checkout.placingOrder') : paymentMethod === 'online_card'
+                ? `${t('checkout.placeOrder')} — ${currency}${total.toFixed(2)}`
+                : `${t('checkout.placeOrder')} — ${currency}${total.toFixed(2)}`
               }
             </button>
           </form>
         </div>
 
         {/* Right: Order Summary */}
-        <div className="w-full md:w-96 bg-gray-500/5 p-5 h-fit">
-          <h2 className="text-xl md:text-2xl font-medium text-gray-700">Order Summary</h2>
+        <div className={`w-full md:w-96 bg-gray-500/5 p-5 h-fit ${isRTL ? 'text-right' : ''}`}>
+          <h2 className="text-xl md:text-2xl font-medium text-gray-700">{t('checkout.orderSummary')}</h2>
           <hr className="border-gray-500/30 my-5" />
 
           <div className="space-y-4 max-h-64 overflow-y-auto">
             {cartProducts.map(({ product, quantity }) => (
-              <div key={product._id} className="flex items-center gap-3">
+              <div key={product._id} className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <div className="w-12 h-12 bg-gray-500/10 rounded flex items-center justify-center overflow-hidden">
                   <Image
                     src={product.image && product.image.length > 0 ? product.image[0] : assets.apple_earphone_image}
@@ -426,26 +420,26 @@ const Checkout = () => {
           {/* Promo code */}
           <form onSubmit={handleApplyPromo} className="mb-4">
             <label className="text-base font-medium uppercase text-gray-600 block mb-2">
-              Promo Code
+              {t('checkout.promoCode')}
             </label>
             {promo ? (
-              <div className="flex items-center justify-between gap-2 bg-green-50 border border-green-300 text-green-700 px-3 py-2.5 text-sm">
-                <span className="font-medium">{promo.code} applied</span>
+              <div className={`flex items-center justify-between gap-2 bg-green-50 border border-green-300 text-green-700 px-3 py-2.5 text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span className="font-medium">{promo.code} {t('checkout.applied')}</span>
                 <button type="button" onClick={() => { removePromo(); setPromoMsg(''); setPromoError(''); }} className="text-xs underline hover:text-red-600">
-                  Remove
+                  {t('checkout.remove')}
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2">
+              <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <input
                   value={promoInput}
                   onChange={(e) => setPromoInput(e.target.value)}
                   type="text"
-                  placeholder="Enter promo code"
+                  placeholder={t('checkout.enterPromo')}
                   className="flex-grow outline-none p-2.5 text-gray-600 border"
                 />
                 <button type="submit" className="bg-orange-600 text-white px-5 py-2 hover:bg-orange-700">
-                  Apply
+                  {t('checkout.apply')}
                 </button>
               </div>
             )}
@@ -454,26 +448,26 @@ const Checkout = () => {
           </form>
 
           <div className="space-y-3">
-            <div className="flex justify-between text-base font-medium">
-              <p className="uppercase text-gray-600">Items {getCartCount()}</p>
+            <div className={`flex justify-between text-base font-medium ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <p className="uppercase text-gray-600">{t('checkout.items')} {getCartCount()}</p>
               <p className="text-gray-800">{currency}{subtotal.toFixed(2)}</p>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-base">
-                <p className="uppercase text-green-600">Promo ({promo?.code})</p>
+              <div className={`flex justify-between text-base ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <p className="uppercase text-green-600">{t('checkout.promoCode')} ({promo?.code})</p>
                 <p className="font-medium text-gray-800">−{currency}{discount.toFixed(2)}</p>
               </div>
             )}
-            <div className="flex justify-between">
-              <p className="text-gray-600">Shipping Fee</p>
-              <p className="font-medium text-gray-800">Free</p>
+            <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <p className="text-gray-600">{t('checkout.shippingFee')}</p>
+              <p className="font-medium text-gray-800">{t('checkout.free')}</p>
             </div>
-            <div className="flex justify-between">
-              <p className="text-gray-600">Tax (VAT)</p>
+            <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <p className="text-gray-600">{t('checkout.tax')}</p>
               <p className="font-medium text-gray-800">{currency}{tax.toFixed(2)}</p>
             </div>
-            <div className="flex justify-between text-lg md:text-xl font-medium border-t pt-3">
-              <p>Total</p>
+            <div className={`flex justify-between text-lg md:text-xl font-medium border-t pt-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <p>{t('checkout.total')}</p>
               <p>{currency}{total.toFixed(2)}</p>
             </div>
           </div>

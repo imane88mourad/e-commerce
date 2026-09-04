@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { productsApi } from "@/lib/api/products";
 import { mapProduct, mapProducts } from "@/lib/transformers";
 import { reviewsApi, wishlistApi } from "@/lib/api/reviews";
@@ -31,6 +32,7 @@ function StarRating({ rating, size = 14 }) {
 
 function ReviewForm({ productId, onSubmitted }) {
     const { user } = useAppContext();
+    const { t, isRTL } = useLanguage();
     const [rating, setRating] = useState(5);
     const [title, setTitle] = useState('');
     const [comment, setComment] = useState('');
@@ -40,19 +42,19 @@ function ReviewForm({ productId, onSubmitted }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!comment.trim() || comment.trim().length < 10) {
-            toast.error('Le commentaire doit contenir au moins 10 caractères.');
+            toast.error(t('product.reviewMinLength'));
             return;
         }
         setSubmitting(true);
         try {
             await reviewsApi.create({ product: productId, rating, title: title.trim(), comment: comment.trim() });
-            toast.success('Votre avis a été soumis et sera visible après modération.');
+            toast.success(t('product.reviewSubmitted'));
             setComment('');
             setTitle('');
             setRating(5);
             if (onSubmitted) onSubmitted();
         } catch (err) {
-            toast.error(err.message || 'Erreur lors de la soumission de l\'avis.');
+            toast.error(err.message || t('error'));
         } finally {
             setSubmitting(false);
         }
@@ -61,17 +63,17 @@ function ReviewForm({ productId, onSubmitted }) {
     if (!user) {
         return (
             <div className="bg-gray-50 rounded-lg p-6 text-center">
-                <p className="text-gray-500 text-sm">Connectez-vous pour laisser un avis.</p>
+                <p className="text-gray-500 text-sm">{t('product.loginToReview')}</p>
             </div>
         );
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-6 space-y-4">
-            <h3 className="font-medium text-gray-800">Donner votre avis</h3>
+        <form onSubmit={handleSubmit} className={`bg-gray-50 rounded-lg p-6 space-y-4 ${isRTL ? 'text-right' : ''}`}>
+            <h3 className="font-medium text-gray-800">{t('product.writeReview')}</h3>
             <div>
-                <label className="text-sm text-gray-600 mb-2 block">Note</label>
-                <div className="flex items-center gap-1">
+                <label className="text-sm text-gray-600 mb-2 block">{t('product.rating')}</label>
+                <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
                     {STARS.map((s) => (
                         <button
                             key={s}
@@ -89,27 +91,27 @@ function ReviewForm({ productId, onSubmitted }) {
                             </svg>
                         </button>
                     ))}
-                    <span className="text-sm text-gray-500 ml-2">{rating}/5</span>
+                    <span className={`text-sm text-gray-500 ${isRTL ? 'mr-2' : 'ml-2'}`}>{rating}/5</span>
                 </div>
             </div>
             <div>
-                <label className="text-sm text-gray-600 mb-1 block">Titre (optionnel)</label>
+                <label className="text-sm text-gray-600 mb-1 block">{t('product.reviewTitle')}</label>
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-500"
-                    placeholder="Résumé de votre avis"
+                    placeholder={t('product.reviewTitlePlaceholder')}
                 />
             </div>
             <div>
-                <label className="text-sm text-gray-600 mb-1 block">Commentaire *</label>
+                <label className="text-sm text-gray-600 mb-1 block">{t('product.reviewComment')}</label>
                 <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-orange-500"
-                    placeholder="Décrivez votre expérience avec ce produit…"
+                    placeholder={t('product.reviewCommentPlaceholder')}
                     required
                 />
             </div>
@@ -118,7 +120,7 @@ function ReviewForm({ productId, onSubmitted }) {
                 disabled={submitting || comment.trim().length < 10}
                 className="px-6 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition disabled:opacity-50"
             >
-                {submitting ? 'Envoi…' : 'Publier mon avis'}
+                {submitting ? t('product.submitting') : t('product.submitReview')}
             </button>
         </form>
     );
@@ -129,6 +131,7 @@ const Product = () => {
     const { id } = useParams();
 
     const { products, router, addToCart, currency, user } = useAppContext()
+    const { t, isRTL } = useLanguage();
 
     const [mainImage, setMainImage] = useState(null);
     const [productData, setProductData] = useState(null);
@@ -138,12 +141,10 @@ const Product = () => {
     const [similarProducts, setSimilarProducts] = useState([]);
     const [relatedProducts, setRelatedProducts] = useState([]);
 
-    // Reviews
     const [reviewStats, setReviewStats] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
 
-    // Wishlist
     const [inWishlist, setInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -211,7 +212,7 @@ const Product = () => {
 
     const toggleWishlist = async () => {
         if (!user) {
-            toast.error('Connectez-vous pour ajouter aux favoris.');
+            toast.error(t('productCard.addToWishlist'));
             return;
         }
         setWishlistLoading(true);
@@ -219,14 +220,14 @@ const Product = () => {
             if (inWishlist) {
                 await wishlistApi.remove(id);
                 setInWishlist(false);
-                toast.success('Retiré des favoris.');
+                toast.success(t('productCard.removedFromWishlist'));
             } else {
                 await wishlistApi.add(id);
                 setInWishlist(true);
-                toast.success('Ajouté aux favoris.');
+                toast.success(t('productCard.addedToWishlist'));
             }
         } catch (err) {
-            toast.error(err.message || 'Erreur.');
+            toast.error(err.message || t('error'));
         } finally {
             setWishlistLoading(false);
         }
@@ -254,7 +255,7 @@ const Product = () => {
             <>
                 <Navbar />
                 <div className="flex flex-col items-center justify-center px-6 md:px-16 lg:px-32 pt-14">
-                    <p className="text-red-500 text-lg">{error || 'Product not found'}</p>
+                    <p className="text-red-500 text-lg">{error || t('notFound.message')}</p>
                 </div>
                 <Footer />
             </>
@@ -303,8 +304,8 @@ const Product = () => {
                         )}
                     </div>
 
-                    <div className="flex flex-col">
-                        <div className="flex items-start justify-between mb-4">
+                    <div className={`flex flex-col ${isRTL ? 'text-right items-end' : ''}`}>
+                        <div className={`flex items-start justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <h1 className="text-3xl font-medium text-gray-800/90">
                                 {productData.name}
                             </h1>
@@ -312,7 +313,7 @@ const Product = () => {
                                 onClick={toggleWishlist}
                                 disabled={wishlistLoading}
                                 className="shrink-0 p-2 rounded-full transition hover:bg-gray-100"
-                                title={inWishlist ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                                title={inWishlist ? t('productCard.removeFromWishlist') : t('productCard.addToWishlist')}
                             >
                                 {inWishlist ? (
                                     <svg width={24} height={24} viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2">
@@ -325,11 +326,11 @@ const Product = () => {
                                 )}
                             </button>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <StarRating rating={Math.round(reviewStats?.average_rating || productData.rating || 0)} size={16} />
                             <p className="text-sm text-gray-500">
                                 ({reviewStats?.average_rating?.toFixed(1) || productData.rating || '0'})
-                                {reviewStats ? ` · ${reviewStats.total_reviews} avis` : ''}
+                                {reviewStats ? ` · ${reviewStats.total_reviews} ${t('product.reviews')}` : ''}
                             </p>
                         </div>
                         <p className="text-gray-600 mt-3">
@@ -338,7 +339,7 @@ const Product = () => {
                         <p className="text-3xl font-medium mt-6">
                             {formatPrice(productData.offerPrice)}
                             {productData.oldPrice && (
-                                <span className="text-base font-normal text-gray-800/60 line-through ml-2">
+                                <span className={`text-base font-normal text-gray-800/60 line-through ${isRTL ? 'mr-2' : 'ml-2'}`}>
                                     {formatPrice(productData.oldPrice)}
                                 </span>
                             )}
@@ -349,37 +350,37 @@ const Product = () => {
                                 <tbody>
                                     {productData.brand && (
                                         <tr>
-                                            <td className="text-gray-600 font-medium">Brand</td>
+                                            <td className="text-gray-600 font-medium">{t('product.brand')}</td>
                                             <td className="text-gray-800/50">{productData.brand}</td>
                                         </tr>
                                     )}
                                     <tr>
-                                        <td className="text-gray-600 font-medium">Category</td>
+                                        <td className="text-gray-600 font-medium">{t('product.category')}</td>
                                         <td className="text-gray-800/50">
                                             {productData.category}
                                         </td>
                                     </tr>
                                     {productData.warranty && (
                                         <tr>
-                                            <td className="text-gray-600 font-medium">Warranty</td>
+                                            <td className="text-gray-600 font-medium">{t('product.warranty')}</td>
                                             <td className="text-gray-800/50">{productData.warranty}</td>
                                         </tr>
                                     )}
                                     {productData.stock !== undefined && (
                                         <tr>
-                                            <td className="text-gray-600 font-medium">Stock</td>
-                                            <td className="text-gray-800/50">{productData.stock > 0 ? 'In Stock' : 'Out of Stock'}</td>
+                                            <td className="text-gray-600 font-medium">{t('product.stock')}</td>
+                                            <td className="text-gray-800/50">{productData.stock > 0 ? t('product.inStock') : t('product.outOfStock')}</td>
                                         </tr>
                                     )}
                                     {productData.weight && (
                                         <tr>
-                                            <td className="text-gray-600 font-medium">Weight</td>
+                                            <td className="text-gray-600 font-medium">{t('product.weight')}</td>
                                             <td className="text-gray-800/50">{productData.weight} kg</td>
                                         </tr>
                                     )}
                                     {productData.dimensions && (
                                         <tr>
-                                            <td className="text-gray-600 font-medium">Dimensions</td>
+                                            <td className="text-gray-600 font-medium">{t('product.dimensions')}</td>
                                             <td className="text-gray-800/50">{productData.dimensions}</td>
                                         </tr>
                                     )}
@@ -389,7 +390,7 @@ const Product = () => {
 
                         {productData.variants && productData.variants.length > 0 && (
                             <div className="mt-6">
-                                <p className="text-gray-600 font-medium mb-2">Variants</p>
+                                <p className="text-gray-600 font-medium mb-2">{t('product.variants')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {productData.variants.map((variant) => (
                                         <button
@@ -410,10 +411,10 @@ const Product = () => {
 
                         {productData.attributes && Object.keys(productData.attributes).length > 0 && (
                             <div className="mt-6">
-                                <p className="text-gray-600 font-medium mb-2">Specifications</p>
+                                <p className="text-gray-600 font-medium mb-2">{t('product.specifications')}</p>
                                 <div className="bg-gray-500/5 rounded-lg p-4">
                                     {Object.entries(productData.attributes).map(([key, value]) => (
-                                        <div key={key} className="flex justify-between py-1">
+                                        <div key={key} className={`flex justify-between py-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                             <span className="text-gray-600 capitalize">{key.replace(/_/g, ' ')}</span>
                                             <span className="text-gray-800">{String(value)}</span>
                                         </div>
@@ -424,7 +425,7 @@ const Product = () => {
 
                         {productData.documents && productData.documents.length > 0 && (
                             <div className="mt-6">
-                                <p className="text-gray-600 font-medium mb-2">Documents</p>
+                                <p className="text-gray-600 font-medium mb-2">{t('product.documents')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {productData.documents.map((document) => (
                                         <a
@@ -447,14 +448,14 @@ const Product = () => {
                                 className="w-full py-3.5 bg-gray-100 text-gray-800/80 hover:bg-gray-200 transition"
                                 disabled={productData.stock === 0}
                             >
-                                {productData.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                                {productData.stock === 0 ? t('product.outOfStock') : t('product.addToCart')}
                             </button>
                             <button
                                 onClick={() => { addToCart(productData._id); router.push('/checkout') }}
                                 className="w-full py-3.5 bg-orange-500 text-white hover:bg-orange-600 transition"
                                 disabled={productData.stock === 0}
                             >
-                                Buy now
+                                {t('product.buyNow')}
                             </button>
                         </div>
                     </div>
@@ -462,26 +463,26 @@ const Product = () => {
 
                 {/* Reviews Section */}
                 <div className="mt-16">
-                    <div className="flex flex-col items-center mb-8">
-                        <p className="text-3xl font-medium">Avis <span className="font-medium text-orange-600">Clients</span></p>
+                    <div className={`flex flex-col items-center mb-8 ${isRTL ? 'items-center' : ''}`}>
+                        <p className="text-3xl font-medium">{t('product.customerReviews')}</p>
                         <div className="w-28 h-0.5 bg-orange-600 mt-2"></div>
                     </div>
 
                     <div className="max-w-3xl mx-auto space-y-8">
                         {/* Review Stats */}
                         {reviewStats && reviewStats.total_reviews > 0 && (
-                            <div className="flex flex-col sm:flex-row items-center gap-8 bg-gray-50 rounded-lg p-6">
+                            <div className={`flex flex-col sm:flex-row items-center gap-8 bg-gray-50 rounded-lg p-6 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
                                 <div className="text-center">
                                     <p className="text-4xl font-bold text-gray-800">{reviewStats.average_rating?.toFixed(1) || '0'}</p>
                                     <StarRating rating={Math.round(reviewStats.average_rating || 0)} size={18} />
-                                    <p className="text-sm text-gray-500 mt-1">{reviewStats.total_reviews} avis</p>
+                                    <p className="text-sm text-gray-500 mt-1">{reviewStats.total_reviews} {t('product.reviews')}</p>
                                 </div>
                                 <div className="flex-1 w-full space-y-1">
                                     {[5, 4, 3, 2, 1].map((star) => {
                                         const count = reviewStats.distribution?.[String(star)] || 0;
                                         const pct = reviewStats.total_reviews > 0 ? (count / reviewStats.total_reviews) * 100 : 0;
                                         return (
-                                            <div key={star} className="flex items-center gap-2 text-sm">
+                                            <div key={star} className={`flex items-center gap-2 text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
                                                 <span className="w-8 text-right text-gray-500">{star} ★</span>
                                                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                                                     <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
@@ -510,14 +511,14 @@ const Product = () => {
                             </div>
                         ) : reviews.length === 0 ? (
                             <p className="text-center text-gray-500 py-8">
-                                Ce produit n&apos;a pas encore reçu d&apos;avis.
+                                {t('product.noReviews')}
                             </p>
                         ) : (
                             <div className="space-y-4">
                                 {reviews.map((r) => (
-                                    <div key={r.id} className="bg-gray-50 rounded-lg p-5">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-3">
+                                    <div key={r.id} className={`bg-gray-50 rounded-lg p-5 ${isRTL ? 'text-right' : ''}`}>
+                                        <div className={`flex items-center justify-between mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                                 <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-sm font-medium">
                                                     {(r.user_name || r.user_email || '?')[0].toUpperCase()}
                                                 </div>
@@ -543,7 +544,7 @@ const Product = () => {
                 {similarProducts.length > 0 && (
                     <div className="flex flex-col items-center">
                         <div className="flex flex-col items-center mb-4 mt-16">
-                            <p className="text-3xl font-medium">Similar <span className="font-medium text-orange-600">Products</span></p>
+                            <p className="text-3xl font-medium">{t('product.similarProducts')}</p>
                             <div className="w-28 h-0.5 bg-orange-600 mt-2"></div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-6 pb-14 w-full">
@@ -556,7 +557,7 @@ const Product = () => {
                 {relatedProducts.length > 0 && (
                     <div className="flex flex-col items-center">
                         <div className="flex flex-col items-center mb-4 mt-16">
-                            <p className="text-3xl font-medium">Related <span className="font-medium text-orange-600">Products</span></p>
+                            <p className="text-3xl font-medium">{t('product.relatedProducts')}</p>
                             <div className="w-28 h-0.5 bg-orange-600 mt-2"></div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-6 pb-14 w-full">

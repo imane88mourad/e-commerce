@@ -9,6 +9,7 @@ import {
 } from '@/components/admin/ui/primitives';
 import { Icon } from '@/components/admin/ui/icons';
 import { adminProductsApi, formatPrice, resolveMediaUrl } from '@/lib/api/admin-products';
+import { useLanguage } from '@/context/LanguageContext';
 
 const PAGE_SIZE = 15;
 
@@ -33,10 +34,10 @@ function SortableTh({ label, field, sort, onSort, align = 'left', sortable = tru
 function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
 
   const [products, setProducts] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [selectedAll, setSelectedAll] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -74,7 +75,6 @@ function ProductsContent() {
 
   useEffect(() => {
     let active = true;
-
     async function fetchMeta() {
       try {
         const catReq = fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/products/categories/?page_size=100`);
@@ -107,7 +107,7 @@ function ProductsContent() {
         setCount(data.count || 0);
       })
       .catch((err) => {
-        if (active) setError(err.message || 'Erreur chargement produits');
+        if (active) setError(err.message || t('admin.products.errorLoading'));
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -132,10 +132,10 @@ function ProductsContent() {
     try {
       const next = !p.is_active;
       await adminProductsApi.partialUpdate(p.id, { is_active: next });
-      toast.success(next ? 'Produit activé' : 'Produit désactivé');
+      toast.success(next ? t('admin.products.activated') : t('admin.products.deactivated'));
       setProducts((prev) => prev.map((x) => x.id === p.id ? { ...x, is_active: next } : x));
     } catch (err) {
-      toast.error(err.message || 'Erreur');
+      toast.error(err.message || t('admin.products.errorActivate'));
     } finally {
       setSelected(null);
     }
@@ -146,12 +146,12 @@ function ProductsContent() {
     setDeleting(true);
     try {
       await adminProductsApi.remove(deleteTarget.id);
-      toast.success('Produit supprimé');
+      toast.success(t('admin.products.deleted'));
       setDeleteTarget(null);
       setProducts((prev) => prev.filter((x) => x.id !== deleteTarget.id));
       setCount((c) => Math.max(0, c - 1));
     } catch (err) {
-      toast.error(err.message || 'Erreur suppression');
+      toast.error(err.message || t('admin.products.errorDelete'));
     } finally {
       setDeleting(false);
     }
@@ -160,18 +160,18 @@ function ProductsContent() {
   return (
     <div>
       <PageHeader
-        title="Produits"
-        subtitle={`${count} produit${count > 1 ? 's' : ''} au catalogue`}
+        title={t('admin.products.title')}
+        subtitle={t('admin.products.subtitle', { count })}
         breadcrumb={
           <>
-            <Link href="/admin" className="hover:text-[color:var(--admin-accent)]">Dashboard</Link>
+            <Link href="/admin" className="hover:text-[color:var(--admin-accent)]">{t('admin.sidebar.dashboard')}</Link>
             <span>/</span>
-            <span>Produits</span>
+            <span>{t('admin.products.title')}</span>
           </>
         }
         actions={
           <Button onClick={() => router.push('/admin/products/new')}>
-            <Icon name="plus" size={16} /> Nouveau produit
+            <Icon name="plus" size={16} /> {t('admin.products.newProduct')}
           </Button>
         }
       />
@@ -181,26 +181,26 @@ function ProductsContent() {
           <Toolbar
             value={search}
             onSearch={setSearch}
-            searchPlaceholder="Rechercher (nom, SKU, référence, marque)…"
+            searchPlaceholder={t('admin.products.searchPlaceholder')}
           >
             <Select value={category} onChange={(e) => applyFilters({ category: e.target.value })} className="md:w-44">
-              <option value="">Catégorie</option>
+              <option value="">{t('admin.products.category')}</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
             <Select value={brand} onChange={(e) => applyFilters({ brand: e.target.value })} className="md:w-40">
-              <option value="">Marque</option>
+              <option value="">{t('admin.products.brand')}</option>
               {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </Select>
             <Select value={status} onChange={(e) => applyFilters({ status: e.target.value })} className="md:w-40">
-              <option value="">Tous statuts</option>
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
-              <option value="featured">Mis en avant</option>
-              <option value="new">Nouveauté</option>
-              <option value="best">Best-seller</option>
+              <option value="">{t('admin.products.allStatuses')}</option>
+              <option value="active">{t('admin.products.active')}</option>
+              <option value="inactive">{t('admin.products.inactive')}</option>
+              <option value="featured">{t('admin.products.featured')}</option>
+              <option value="new">{t('admin.products.newLabel')}</option>
+              <option value="best">{t('admin.products.bestSeller')}</option>
             </Select>
             {(category || brand || status) && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>Réinitialiser</Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters}>{t('admin.products.reset')}</Button>
             )}
           </Toolbar>
         </div>
@@ -212,11 +212,11 @@ function ProductsContent() {
         ) : products.length === 0 ? (
           <EmptyState
             icon={<Icon name="products" size={28} />}
-            title="Aucun produit trouvé"
-            description="Aucun produit ne correspond à vos critères. Modifiez les filtres ou créez un nouveau produit."
+            title={t('admin.products.noProductsFound')}
+            description={t('admin.products.noProductsDesc')}
             action={
               <Button onClick={() => router.push('/admin/products/new')}>
-                <Icon name="plus" size={16} /> Nouveau produit
+                <Icon name="plus" size={16} /> {t('admin.products.newProduct')}
               </Button>
             }
           />
@@ -225,14 +225,14 @@ function ProductsContent() {
             <table className="w-full text-sm">
               <thead className="border-b border-[color:var(--admin-border)]">
                 <tr>
-                  <SortableTh label="Produit" field="name" sort={sort} onSort={setSort} />
-                  <SortableTh label="Catégorie" field="category" sort={sort} onSort={setSort} />
-                  <SortableTh label="Marque" field="brand" sort={sort} onSort={setSort} />
-                  <SortableTh label="Prix" field="price" sort={sort} onSort={setSort} align="right" />
-                  <SortableTh label="Stock" field="stock" sort={sort} onSort={setSort} align="right" />
-                  <SortableTh label="Statut" sortable={false} />
+                  <SortableTh label={t('admin.products.product')} field="name" sort={sort} onSort={setSort} />
+                  <SortableTh label={t('admin.products.category')} field="category" sort={sort} onSort={setSort} />
+                  <SortableTh label={t('admin.products.brand')} field="brand" sort={sort} onSort={setSort} />
+                  <SortableTh label={t('admin.products.price')} field="price" sort={sort} onSort={setSort} align="right" />
+                  <SortableTh label={t('admin.products.stock')} field="stock" sort={sort} onSort={setSort} align="right" />
+                  <SortableTh label={t('admin.products.status')} sortable={false} />
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">
-                    Actions
+                    {t('admin.products.actions')}
                   </th>
                 </tr>
               </thead>
@@ -258,7 +258,7 @@ function ProductsContent() {
                             {displayName(p.name)}
                           </div>
                           <div className="truncate text-xs text-[color:var(--admin-muted)]">
-                            {p.sku || 'Sans SKU'}
+                            {p.sku || t('admin.products.noSku')}
                           </div>
                         </div>
                       </div>
@@ -277,16 +277,16 @@ function ProductsContent() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        <Badge tone={p.is_active ? 'green' : 'gray'} dot>{p.is_active ? 'Actif' : 'Inactif'}</Badge>
-                        {p.is_featured && <Badge tone="orange">Mis en avant</Badge>}
-                        {p.is_new && <Badge tone="blue">Nouveau</Badge>}
-                        {p.is_best_seller && <Badge tone="purple">Best-seller</Badge>}
+                        <Badge tone={p.is_active ? 'green' : 'gray'} dot>{p.is_active ? t('admin.products.active') : t('admin.products.inactive')}</Badge>
+                        {p.is_featured && <Badge tone="orange">{t('admin.products.featured')}</Badge>}
+                        {p.is_new && <Badge tone="blue">{t('admin.products.newLabel')}</Badge>}
+                        {p.is_best_seller && <Badge tone="purple">{t('admin.products.bestSeller')}</Badge>}
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          title={p.is_active ? 'Désactiver' : 'Activer'}
+                          title={p.is_active ? t('admin.products.deactivate') : t('admin.products.activate')}
                           onClick={(e) => { e.stopPropagation(); toggleActive(p); }}
                           disabled={selected === p.id}
                           className="rounded-lg p-2 text-[color:var(--admin-muted)] transition hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-accent)] disabled:opacity-50"
@@ -296,7 +296,7 @@ function ProductsContent() {
                             : <Icon name="eye" size={16} />}
                         </button>
                         <button
-                          title="Supprimer"
+                          title={t('admin.products.delete')}
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
                           className="rounded-lg p-2 text-[color:var(--admin-muted)] transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                         >
@@ -312,14 +312,14 @@ function ProductsContent() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-[color:var(--admin-border)] px-5 py-3 text-sm">
                 <span className="text-[color:var(--admin-muted)]">
-                  Page {(page)} sur {totalPages} — {count} résultat{count > 1 ? 's' : ''}
+                  {t('admin.products.pageOf', { page, total: totalPages, count })}
                 </span>
                 <div className="flex items-center gap-2">
                   <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                    <Icon name="arrowLeft" size={14} /> Précédent
+                    <Icon name="arrowLeft" size={14} /> {t('admin.products.prev')}
                   </Button>
                   <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-                    Suivant <Icon name="arrowRight" size={14} />
+                    {t('admin.products.next')} <Icon name="arrowRight" size={14} />
                   </Button>
                 </div>
               </div>
@@ -331,20 +331,20 @@ function ProductsContent() {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Supprimer le produit"
+        title={t('admin.products.deleteTitle')}
         size="sm"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Annuler</Button>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>{t('admin.products.cancel')}</Button>
             <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
-              {deleting ? <span className="mr-1 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : 'Supprimer'}
+              {deleting ? <span className="mr-1 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : t('admin.products.confirmDelete')}
             </Button>
           </div>
         }
       >
         <p className="text-sm text-[color:var(--admin-muted)]">
-          Voulez-vous vraiment supprimer <span className="font-semibold text-[color:var(--admin-text)]">« {deleteTarget?.name} »</span> ?
-          Cette action est irréversible.
+          {t('admin.products.deleteConfirm')} <span className="font-semibold text-[color:var(--admin-text)]">« {deleteTarget?.name} »</span> ?
+          {t('admin.products.deleteIrreversible')}
         </p>
       </Modal>
     </div>
@@ -352,8 +352,9 @@ function ProductsContent() {
 }
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={<><PageHeader title="Produits" /><Card><TableSkeleton rows={8} cols={6} /></Card></>}>
+    <Suspense fallback={<><PageHeader title={t('admin.products.title')} /><Card><TableSkeleton rows={8} cols={6} /></Card></>}>
       <ProductsContent />
     </Suspense>
   );

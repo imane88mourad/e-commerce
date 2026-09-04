@@ -1,10 +1,11 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ADMIN_NAV } from './Sidebar';
 import { Icon } from './ui/icons';
 import { useAdminTheme } from './ui/theme';
 import { useAppContext } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
+import AdminLanguageSwitcher from './AdminLanguageSwitcher';
 
 function useClickOutside(ref, handler) {
   useEffect(() => {
@@ -16,11 +17,28 @@ function useClickOutside(ref, handler) {
   }, [ref, handler]);
 }
 
+const NAV_ITEMS = [
+  { nameKey: 'admin.sidebar.dashboard', path: '/admin' },
+  { nameKey: 'admin.sidebar.orders', path: '/admin/orders' },
+  { nameKey: 'admin.sidebar.customers', path: '/admin/customers' },
+  { nameKey: 'admin.sidebar.quotes', path: '/admin/quotes' },
+  { nameKey: 'admin.sidebar.invoices', path: '/admin/invoices' },
+  { nameKey: 'admin.sidebar.products', path: '/admin/products' },
+  { nameKey: 'admin.sidebar.categories', path: '/admin/categories' },
+  { nameKey: 'admin.sidebar.brands', path: '/admin/brands' },
+  { nameKey: 'admin.sidebar.promotions', path: '/admin/promotions' },
+  { nameKey: 'admin.sidebar.reviews', path: '/admin/reviews' },
+  { nameKey: 'admin.sidebar.analytics', path: '/admin/analytics' },
+  { nameKey: 'admin.sidebar.users', path: '/admin/users' },
+  { nameKey: 'admin.sidebar.settings', path: '/admin/settings' },
+];
+
 export default function Header({ onMenuToggle }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggle } = useAdminTheme();
   const { userData, logout } = useAppContext();
+  const { t } = useLanguage();
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -29,7 +47,6 @@ export default function Header({ onMenuToggle }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
 
-  // Fetch notifications when dropdown opens
   useEffect(() => {
     if (notifOpen && userData) {
       setNotifLoading(true);
@@ -39,13 +56,12 @@ export default function Header({ onMenuToggle }) {
             setNotifications(notifs.results || []);
             setUnreadCount(count);
           })
-          .catch(() => {}) // silently fail — notifications are non-critical
+          .catch(() => {})
           .finally(() => setNotifLoading(false))
       );
     }
   }, [notifOpen, userData]);
 
-  // Poll unread count every 30s when logged in
   useEffect(() => {
     if (!userData) return;
     let mounted = true;
@@ -94,19 +110,16 @@ export default function Header({ onMenuToggle }) {
   useClickOutside(notifRef, () => setNotifOpen(false));
   useClickOutside(profileRef, () => setProfileOpen(false));
 
-  // Determine page title and breadcrumb from pathname
-  const navItems = ADMIN_NAV.flatMap((s) => s.items);
-  const currentNav = navItems.find((i) =>
+  const currentNav = NAV_ITEMS.find((i) =>
     i.path === '/admin' ? pathname === '/admin' || pathname === '/admin/' : pathname.startsWith(i.path)
   );
-  const title = currentNav?.name || 'Dashboard';
+  const title = currentNav ? t(currentNav.nameKey) : t('admin.sidebar.dashboard');
 
-  // Build breadcrumb segments
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs = segments.map((seg, i) => {
     const path = '/' + segments.slice(0, i + 1).join('/');
-    const item = navItems.find((n) => n.path === path);
-    return { label: item?.name || seg.charAt(0).toUpperCase() + seg.slice(1), path };
+    const item = NAV_ITEMS.find((n) => n.path === path);
+    return { label: item ? t(item.nameKey) : seg.charAt(0).toUpperCase() + seg.slice(1), path };
   });
 
   const submitSearch = (e) => {
@@ -126,7 +139,6 @@ export default function Header({ onMenuToggle }) {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-[color:var(--admin-border)] bg-[color:var(--admin-surface)]/95 px-4 backdrop-blur md:px-6">
-      {/* Mobile menu toggle */}
       <button
         onClick={onMenuToggle}
         className="rounded-lg p-2 text-[color:var(--admin-muted)] hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-text)] lg:hidden"
@@ -135,7 +147,6 @@ export default function Header({ onMenuToggle }) {
         <Icon name="menu" size={22} />
       </button>
 
-      {/* Breadcrumb */}
       <div className="hidden min-w-0 items-center gap-1.5 text-sm md:flex">
         {breadcrumbs.map((b, i) => (
           <React.Fragment key={b.path}>
@@ -154,10 +165,8 @@ export default function Header({ onMenuToggle }) {
         ))}
       </div>
 
-      {/* Mobile title */}
       <h1 className="text-lg font-semibold text-[color:var(--admin-text)] sm:hidden lg:block">{title}</h1>
 
-      {/* Global search */}
       <form onSubmit={submitSearch} className="ml-auto hidden items-center md:flex">
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--admin-muted)]">
@@ -166,23 +175,23 @@ export default function Header({ onMenuToggle }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Recherche globale…"
+            placeholder={t('admin.header.globalSearch')}
             className="w-64 rounded-lg border border-[color:var(--admin-border)] bg-[color:var(--admin-bg)] py-2 pl-9 pr-3 text-sm text-[color:var(--admin-text)] outline-none transition placeholder:text-[color:var(--admin-muted)] focus:border-[color:var(--admin-accent)] focus:ring-2 focus:ring-[color:var(--admin-accent)]/20 lg:w-80"
           />
         </div>
       </form>
 
-      {/* Theme toggle */}
+      <AdminLanguageSwitcher />
+
       <button
         onClick={toggle}
         className="ml-2 rounded-lg p-2 text-[color:var(--admin-muted)] hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-accent)]"
         aria-label="Toggle theme"
-        title={theme === 'light' ? 'Mode sombre' : 'Mode clair'}
+        title={theme === 'light' ? t('admin.header.darkMode') : t('admin.header.lightMode')}
       >
         <Icon name={theme === 'light' ? 'moon' : 'sun'} size={20} />
       </button>
 
-      {/* Notifications */}
       <div className="relative" ref={notifRef}>
         <button
           onClick={() => setNotifOpen((v) => !v)}
@@ -200,13 +209,10 @@ export default function Header({ onMenuToggle }) {
         {notifOpen && (
           <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-[color:var(--admin-border)] bg-[color:var(--admin-surface)] shadow-xl">
             <div className="flex items-center justify-between border-b border-[color:var(--admin-border)] px-4 py-3">
-              <span className="text-sm font-semibold text-[color:var(--admin-text)]">Notifications</span>
+              <span className="text-sm font-semibold text-[color:var(--admin-text)]">{t('admin.header.notifications')}</span>
               {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllRead}
-                  className="text-xs text-[color:var(--admin-accent)] hover:underline"
-                >
-                  Tout marquer lu
+                <button onClick={handleMarkAllRead} className="text-xs text-[color:var(--admin-accent)] hover:underline">
+                  {t('admin.header.markAllRead')}
                 </button>
               )}
             </div>
@@ -217,7 +223,7 @@ export default function Header({ onMenuToggle }) {
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="py-8 text-center text-sm text-[color:var(--admin-muted)]">
-                  Aucune notification
+                  {t('admin.header.noNotifications')}
                 </div>
               ) : (
                 notifications.map((n) => (
@@ -242,12 +248,11 @@ export default function Header({ onMenuToggle }) {
         )}
       </div>
 
-      {/* Profile */}
       <div className="relative" ref={profileRef}>
         <button
           onClick={() => setProfileOpen((v) => !v)}
           className="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-[color:var(--admin-accent-soft)]"
-          aria-label="Profil"
+          aria-label="Profile"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--admin-accent)] text-sm font-semibold text-white">
             {userInitial}
@@ -270,26 +275,26 @@ export default function Header({ onMenuToggle }) {
                 onClick={() => { setProfileOpen(false); router.push('/account'); }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[color:var(--admin-muted)] hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-text)]"
               >
-                <Icon name="settings" size={16} /> Mon profil
+                <Icon name="settings" size={16} /> {t('admin.header.myProfile')}
               </button>
               <button
                 onClick={() => { setProfileOpen(false); router.push('/admin/settings'); }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[color:var(--admin-muted)] hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-text)]"
               >
-                <Icon name="settings" size={16} /> Paramètres
+                <Icon name="settings" size={16} /> {t('admin.header.settings')}
               </button>
               <button
                 onClick={() => { setProfileOpen(false); router.push('/'); }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[color:var(--admin-muted)] hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-text)]"
               >
-                <Icon name="eye" size={16} /> Voir la boutique
+                <Icon name="eye" size={16} /> {t('admin.header.viewStore')}
               </button>
               <div className="my-1 border-t border-[color:var(--admin-border)]" />
               <button
                 onClick={() => { setProfileOpen(false); logout(); }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
               >
-                <Icon name="logout" size={16} /> Déconnexion
+                <Icon name="logout" size={16} /> {t('admin.header.logout')}
               </button>
             </div>
           </div>

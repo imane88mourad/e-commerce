@@ -8,6 +8,7 @@ import {
 import { Icon } from '@/components/admin/ui/icons';
 import { adminCustomersApi } from '@/lib/api/admin-customers';
 import { formatPrice } from '@/lib/api/admin-billing';
+import { useLanguage } from '@/context/LanguageContext';
 
 const fmtDate = (iso) => {
   if (!iso) return '—';
@@ -16,6 +17,7 @@ const fmtDate = (iso) => {
 
 export default function CustomersPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,7 +38,7 @@ export default function CustomersPage() {
           setCustomers(data.customers || []);
         }
       })
-      .catch((err) => { if (active) setError(err.message || 'Erreur chargement clients'); })
+      .catch((err) => { if (active) setError(err.message || t('admin.customers.errorLoading')); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
@@ -62,27 +64,27 @@ export default function CustomersPage() {
   return (
     <div>
       <PageHeader
-        title="Clients"
-        subtitle={`${customers.length} client${customers.length > 1 ? 's' : ''}`}
+        title={t('admin.customers.title')}
+        subtitle={t('admin.customers.subtitle', { count: customers.length })}
         breadcrumb={
           <>
-            <Link href="/admin" className="hover:text-[color:var(--admin-accent)]">Dashboard</Link>
+            <Link href="/admin" className="hover:text-[color:var(--admin-accent)]">{t('admin.sidebar.dashboard')}</Link>
             <span>/</span>
-            <span>Clients</span>
+            <span>{t('admin.customers.title')}</span>
           </>
         }
       />
 
       <Card>
         <div className="px-5 pt-5">
-          <Toolbar value={search} onSearch={(v) => { setSearch(v); setPage(1); }} searchPlaceholder="Rechercher (nom, email, téléphone)…">
+          <Toolbar value={search} onSearch={(v) => { setSearch(v); setPage(1); }} searchPlaceholder={t('admin.customers.searchPlaceholder')}>
             <Select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }} className="md:w-44">
-              <option value="">Tous types</option>
-              <option value="registered">Enregistrés</option>
-              <option value="guest">Invités</option>
+              <option value="">{t('admin.customers.allTypes')}</option>
+              <option value="registered">{t('admin.customers.registered')}</option>
+              <option value="guest">{t('admin.customers.guest')}</option>
             </Select>
             {(typeFilter || search) && (
-              <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setTypeFilter(''); setPage(1); }}>Réinitialiser</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setTypeFilter(''); setPage(1); }}>{t('admin.customers.reset')}</Button>
             )}
           </Toolbar>
         </div>
@@ -94,21 +96,21 @@ export default function CustomersPage() {
         ) : paged.length === 0 ? (
           <EmptyState
             icon={<Icon name="clients" size={28} />}
-            title="Aucun client"
-            description="Les clients apparaîtront ici après les premières commandes."
+            title={t('admin.customers.noCustomers')}
+            description={t('admin.customers.noCustomersDesc')}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-[color:var(--admin-border)]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Téléphone</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Commandes</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Total</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Type</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.customer')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.email')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.phone')}</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.orders')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.total')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.type')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[color:var(--admin-muted)]">{t('admin.customers.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--admin-border)]">
@@ -131,11 +133,11 @@ export default function CustomersPage() {
                     <td className="px-4 py-3 text-center font-medium text-[color:var(--admin-text)]">{c.orderCount}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[color:var(--admin-text)]">{formatPrice(c.totalSpent)}</td>
                     <td className="px-4 py-3">
-                      <Badge tone={c.type === 'registered' ? 'blue' : 'gray'}>{c.type === 'registered' ? 'Enregistré' : 'Invité'}</Badge>
+                      <Badge tone={c.type === 'registered' ? 'blue' : 'gray'}>{c.type === 'registered' ? t('admin.customers.registered') : t('admin.customers.guest')}</Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end">
-                        <button title="Voir" onClick={(e) => { e.stopPropagation(); router.push(`/admin/customers/${encodeURIComponent(c.id)}`); }} className="rounded-lg p-2 text-[color:var(--admin-muted)] transition hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-accent)]">
+                        <button title={t('admin.customers.view')} onClick={(e) => { e.stopPropagation(); router.push(`/admin/customers/${encodeURIComponent(c.id)}`); }} className="rounded-lg p-2 text-[color:var(--admin-muted)] transition hover:bg-[color:var(--admin-accent-soft)] hover:text-[color:var(--admin-accent)]">
                           <Icon name="eye" size={16} />
                         </button>
                       </div>

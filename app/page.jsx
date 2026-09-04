@@ -9,10 +9,12 @@ import ProductCard from "@/components/ProductCard";
 import Loading from "@/components/Loading";
 import { productsApi } from "@/lib/api/products";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { mapProducts } from "@/lib/transformers";
 
 const Home = () => {
   const { categories } = useAppContext();
+  const { t, isRTL } = useLanguage();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [newProducts, setNewProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
@@ -62,8 +64,8 @@ const Home = () => {
         {/* Categories Section */}
         {categories.length > 0 && (
           <div className="flex flex-col items-center pt-14">
-            <p className="text-2xl font-medium text-left w-full">Categories</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full">
+            <p className={`text-2xl font-medium w-full ${isRTL ? 'text-right' : 'text-left'}`}>{t('home.categories')}</p>
+            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full ${isRTL ? 'text-right' : ''}`}>
               {categories.slice(0, 10).map((category, index) => (
                 <div
                   key={category.id || index}
@@ -85,14 +87,14 @@ const Home = () => {
         {/* All Products */}
         {allProducts.length > 0 && (
           <div className="flex flex-col items-center pt-14">
-            <p className="text-2xl font-medium text-left w-full">All Products</p>
+            <p className={`text-2xl font-medium w-full ${isRTL ? 'text-right' : 'text-left'}`}>{t('home.allProducts')}</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full">
               {allProducts.slice(0, 10).map((product, index) => (
                 <ProductCard key={product._id || index} product={product} />
               ))}
             </div>
             <button onClick={() => window.location.href = '/all-products'} className="px-8 py-2 mb-16 border rounded text-gray-500/70 hover:bg-slate-50/90 transition">
-              See more
+              {t('seeMore')}
             </button>
           </div>
         )}
@@ -100,14 +102,14 @@ const Home = () => {
         {/* Featured Products */}
         {featuredProducts.length > 0 && (
           <div className="flex flex-col items-center pt-14">
-            <p className="text-2xl font-medium text-left w-full">Featured Products</p>
+            <p className={`text-2xl font-medium w-full ${isRTL ? 'text-right' : 'text-left'}`}>{t('home.featuredProducts')}</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full">
               {featuredProducts.slice(0, 5).map((product, index) => (
                 <ProductCard key={product._id || index} product={product} />
               ))}
             </div>
             <button onClick={() => window.location.href = '/all-products?featured=true'} className="px-8 py-2 mb-16 border rounded text-gray-500/70 hover:bg-slate-50/90 transition">
-              See more
+              {t('seeMore')}
             </button>
           </div>
         )}
@@ -115,14 +117,14 @@ const Home = () => {
         {/* New Products */}
         {newProducts.length > 0 && (
           <div className="flex flex-col items-center pt-14">
-            <p className="text-2xl font-medium text-left w-full">New Arrivals</p>
+            <p className={`text-2xl font-medium w-full ${isRTL ? 'text-right' : 'text-left'}`}>{t('home.newArrivals')}</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full">
               {newProducts.slice(0, 5).map((product, index) => (
                 <ProductCard key={product._id || index} product={product} />
               ))}
             </div>
             <button onClick={() => window.location.href = '/all-products?new=true'} className="px-8 py-2 mb-16 border rounded text-gray-500/70 hover:bg-slate-50/90 transition">
-              See more
+              {t('seeMore')}
             </button>
           </div>
         )}
@@ -130,14 +132,14 @@ const Home = () => {
         {/* Best Sellers */}
         {bestSellers.length > 0 && (
           <div className="flex flex-col items-center pt-14">
-            <p className="text-2xl font-medium text-left w-full">Best Sellers</p>
+            <p className={`text-2xl font-medium w-full ${isRTL ? 'text-right' : 'text-left'}`}>{t('home.bestSellers')}</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-6 pb-14 w-full">
               {bestSellers.slice(0, 5).map((product, index) => (
                 <ProductCard key={product._id || index} product={product} />
               ))}
             </div>
             <button onClick={() => window.location.href = '/all-products?best_sellers=true'} className="px-8 py-2 mb-16 border rounded text-gray-500/70 hover:bg-slate-50/90 transition">
-              See more
+              {t('seeMore')}
             </button>
           </div>
         )}
